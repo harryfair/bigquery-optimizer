@@ -1,197 +1,163 @@
 # BigQuery Optimizer for Google Sheets
 
-An optimized Google Apps Script solution that reduces BigQuery costs by fetching data once and distributing it locally to multiple sheets based on configurable filters.
+A simplified Google Apps Script solution that reduces BigQuery costs by 80-90% by fetching data once instead of running multiple expensive queries.
 
-## 🚀 Quick Start
+## 🎯 **What This Does**
 
-1. **Copy the script files** to your Google Apps Script project
-2. **Enable BigQuery API** in your Google Cloud Console
-3. **Run the main function**:
-   ```javascript
-   fetchAndDistributeData();
-   ```
+**Before**: Multiple BigQuery queries = High costs  
+**After**: Single BigQuery query + local data = 80-90% cost savings  
 
-## 💰 Cost Savings
+**Main Function**: `quickTestYourSheet()` - Gets all your campaign data in one optimized call
 
-- **Before**: Multiple BigQuery calls for each sheet = 5x costs
-- **After**: Single BigQuery call + local filtering = 80% cost reduction
-- **Estimated Monthly Savings**: $50-200+ depending on data volume
+## 🚀 **Quick Start**
 
-## 📁 Project Structure
+1. **Open the deployed script**: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit
+2. **Select function**: `quickTestYourSheet` from dropdown
+3. **Click Run** ▶️
+4. **View your data**: https://docs.google.com/spreadsheets/d/10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ/edit
+
+## 💰 **Cost Savings**
+
+**Example Scenario**:
+- **Before**: 5 queries/day × 30 days = 150 queries/month → ~$7.50/month
+- **After**: 1 query/day × 30 days = 30 queries/month → ~$1.50/month
+- **Savings**: $6/month (80% reduction)
+
+## 📁 **Project Structure (Simplified)**
 
 ```
 bigquery-optimizer/
-├── src/
-│   ├── main.gs                 # Main orchestration functions
-│   ├── bigquery-fetcher.gs     # BigQuery data fetching with caching
-│   ├── data-distributor.gs     # Local filtering and distribution
-│   └── sheet-formatter.gs      # Sheet formatting utilities
-├── config/
-│   ├── appsscript.json         # Apps Script configuration
-│   └── filter-configs.js       # Centralized filter configurations
-├── examples/
-│   └── usage-examples.gs       # 10+ practical examples
-└── docs/
-    ├── SETUP.md               # Detailed setup guide
-    └── COST-ANALYSIS.md       # Cost comparison analysis
+├── main.gs                    # Main function: quickTestYourSheet()
+├── bigquery-fetcher.gs        # Simplified BigQuery data fetching
+├── sheet-formatter.gs         # Basic Google Sheets formatting
+├── appsscript.json            # Apps Script configuration
+└── docs/                      # Documentation
 ```
 
-## 🔧 Core Functions
+## 🔧 **Core Functions**
 
-### Main Functions
-- `fetchAndDistributeData()` - Primary function that replaces multiple BigQuery calls
-- `exportKevinAggregates()` - Backward compatible with your existing script
-- `exportFilteredData(filterName, sheetName)` - Export specific filtered data
-
-### Key Features
-- **Single BigQuery Call**: Fetch all data once, filter locally
-- **Configurable Filters**: 20+ predefined filters for different levels
-- **Automatic Formatting**: Maintains your existing number/date formatting
-- **Performance Monitoring**: Built-in performance and cost tracking
-- **Backward Compatibility**: Existing scripts continue to work
-
-## 📊 Available Filters
-
-### Squad Levels
-- `kevin_squad` - AREA 2 data (backward compatibility)
-- `squad_area1`, `squad_area2`, `squad_area3` - By squad
-
-### Content Types
-- `content_active` - Campaigns with content
-- `content_video` - Video content campaigns
-- `content_image` - Image content campaigns
-
-### Performance
-- `high_performers` - ROAS > 2.0
-- `low_performers` - ROAS < 1.0
-- `active_campaigns` - Currently active
-- `paused_campaigns` - Paused campaigns
-
-### Spending
-- `high_spend` - >100k last 30 days
-- `low_spend` - <10k last 30 days
-
-## 📋 Usage Examples
-
-### Basic Usage
+### **Primary Function**
 ```javascript
-// Replace multiple BigQuery calls with single optimized call
-fetchAndDistributeData();
+quickTestYourSheet()
+// - Connects to your specific Google Sheet
+// - Fetches ALL campaign data from BigQuery (single query)
+// - Creates 'all_data' sheet with formatted results
+// - Saves 80-90% on BigQuery costs
 ```
 
-### Backward Compatibility
+### **What You Get**
+- **All campaign data** in one sheet: `all_data`
+- **Team structure**: SQUAD, content creators, DMs, campaigns
+- **Metrics**: Cost, GDV, ROAS for today, yesterday, L3D, L30D, this month, this year
+- **Formatting**: Numbers with commas, ROAS with decimals, percentages
+- **Status tracking**: ACTIVE/PAUSED campaigns
+
+## 📊 **Your Team Configuration**
+
+### **Squads (6)**:
+- AREA 1, AREA 2, AREA 3, PROGRAM, HOSPITAL, INBOUND
+
+### **Content Creators (41)**:
+- MONICA, TAZKIYA, SHAFIRA, VORA, BUNGA, NOURMA, PHANIE, AUZIAH
+- GITA, YASYI, ABI, ATI, DEWI, RESTY, NABILLA, DZULFIKAR
+- DIMAS, NADIAUM, BIMA, LUI, INTA, HANIFA, OKTA, VICKY
+- ALYA, LINDY, AHDANIA, HASNA, NOYA, JULI, GINA, RENNI
+- UNIKE, RAHMAH, SYAHID, WINNY, EVINTA, NAIMMAH, MELATI, DELA, WITRI
+
+### **Digital Marketers (19)**:
+- MIQDAD, NAUFAL, HAMAM, TAUFIK, CITRA, AKBAR, LUTHFI, DANNY
+- ARIES, IBECK, ILHAM, DHANI, ALVIN, KEVIN, FAHMI, DINI
+- ICA, RIEFAN, NABILAH
+
+## 📋 **Usage Examples**
+
+### **Basic Usage** (What you need now)
 ```javascript
-// Your existing script works unchanged
-exportKevinAggregates();
+// Run this to get all your data
+quickTestYourSheet();
 ```
 
-### Specific Filters
+### **Configuration Check**
 ```javascript
-// Export high performers to specific sheet
-exportFilteredData('high_performers', 'top_campaigns');
-
-// Export Kevin's campaigns
-exportFilteredData('dm_kevin', 'kevin_campaigns');
+// Test connection to your sheet
+testYourSheetConnection();
 ```
 
-### Custom Filtering
+### **Data Verification**
 ```javascript
-// Create custom filter
+// Fetch data without writing to sheet (for testing)
 const allData = BigQueryFetcher.fetchAllData();
-const customFilter = {
-  filter: (row, headers) => {
-    const roas = parseFloat(row[headers.indexOf('roas_ads_l30d')]);
-    const cost = parseFloat(row[headers.indexOf('cost_l30d')]);
-    return roas > 1.5 && cost > 50000; // High value campaigns
-  }
-};
-
-const filtered = DataDistributor.applyFilter(allData, customFilter);
-SheetFormatter.writeToSheet(spreadsheet, 'high_value', filtered.headers, filtered.rows);
+console.log(`Fetched ${allData.rows.length} campaigns`);
 ```
 
-## ⚙️ Configuration
+## ⚙️ **Configuration**
 
-### Filter Configuration
-Add custom filters in `config/filter-configs.js`:
-
+### **Your Sheet ID** (Already configured)
 ```javascript
-FilterConfigs.addCustomFilter('my_filter', {
-  sheetName: 'my_sheet',
-  description: 'My custom filter',
-  filter: (row, headers) => {
-    // Your filtering logic here
-    return row[0] === 'some_value';
-  }
-});
+const YOUR_SHEET_ID = '10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ';
 ```
 
-### BigQuery Configuration
-Update configuration in `src/bigquery-fetcher.gs`:
-
+### **BigQuery Configuration** (Already configured)
 ```javascript
-const BigQueryFetcher = {
-  config: {
-    projectId: 'your-project-id',
-    datasetId: 'your-dataset',
-    tableId: 'your-table',
-    location: 'your-location'
-  }
-};
+config: {
+  projectId: 'numeric-button-449507-v7',
+  datasetId: 'gdv',
+  tableId: 'gdv-daily',
+  location: 'asia-southeast2'
+}
 ```
 
-## 📈 Performance Monitoring
+## 🔄 **How It Works**
 
-```javascript
-// Get optimization statistics
-const stats = getOptimizationStats();
-console.log('Cost savings:', stats.monthlySavings);
-console.log('Queries reduced from', stats.sheetsCount, 'to 1');
-```
+1. **Single BigQuery Call**: Fetches all campaign data with complex aggregations
+2. **Local Processing**: No additional BigQuery queries needed
+3. **Sheet Writing**: Creates formatted `all_data` sheet in your Google Sheet
+4. **Cost Savings**: 80-90% reduction vs multiple queries
 
-## 🔄 Migration from Existing Script
+## 🕐 **Automation (Optional)**
 
-1. **Backup** your current Apps Script project
-2. **Copy** all files from this optimizer to your project
-3. **Update** the BigQuery configuration with your project details
-4. **Test** with `exportKevinAggregates()` - should work identically
-5. **Replace** multiple function calls with `fetchAndDistributeData()`
+Set up automated triggers in Apps Script:
+1. **Triggers** (clock icon) → **Add Trigger**
+2. **Function**: `quickTestYourSheet`
+3. **Event**: Time-driven (daily recommended)
 
-## 🕐 Automation
+## 🔍 **Troubleshooting**
 
-Set up automated triggers:
-1. Go to **Extensions > Apps Script**
-2. Click **Triggers** (clock icon)
-3. Add trigger for `fetchAndDistributeData()`
-4. Set schedule (daily, hourly, etc.)
+### **Common Issues**
+- **"Permission denied"**: Enable BigQuery API in Google Cloud Console
+- **"Table not found"**: Verify project/dataset/table names are correct
+- **No data**: Check if campaigns exist for recent dates
 
-## 🔍 Troubleshooting
+### **Performance Tips**
+- Run once daily to minimize costs
+- Check console logs for execution details
+- Data includes all time periods (today through this year)
 
-### Common Issues
-- **BigQuery permissions**: Ensure your account has BigQuery access
-- **API not enabled**: Enable BigQuery API in Google Cloud Console
-- **Memory limits**: Use caching and batch operations for large datasets
+## 📚 **Documentation**
 
-### Performance Tips
-- Data is cached for 5 minutes to avoid unnecessary BigQuery calls
-- Use `BigQueryFetcher.clearCache()` to force fresh data
-- Monitor performance with `getOptimizationStats()`
+- [Setup Guide](docs/SETUP.md) - Detailed setup instructions
+- [Cost Analysis](docs/COST-ANALYSIS.md) - ROI and savings breakdown
+- [Deployment Summary](DEPLOYMENT.md) - Current deployment details
 
-## 📚 Learn More
+## 🚀 **Future Expansion**
 
-- [Setup Guide](docs/SETUP.md) - Detailed installation instructions
-- [Cost Analysis](docs/COST-ANALYSIS.md) - ROI calculation details
-- [Examples](examples/usage-examples.gs) - 10+ practical examples
+This simplified version provides the foundation for:
+- Individual team member sheets
+- Advanced filtering and analytics
+- Performance monitoring dashboards
+- Automated reporting
 
-## 🆘 Support
+## 📞 **Support**
 
-- Check [examples/usage-examples.gs](examples/usage-examples.gs) for common use cases
-- Review error logs in Apps Script console
-- Validate filters with `FilterConfigs.validateFilter()`
+**Deployed Apps Script**: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit  
+**Your Google Sheet**: https://docs.google.com/spreadsheets/d/10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ/edit  
+**GitHub Repository**: https://github.com/harryfair/bigquery-optimizer
 
-## 🔄 Version History
+## 🎯 **Current Status**
 
-- **v1.0** - Initial release with core optimization features
-- Reduced BigQuery costs by 80%
-- Maintained 100% backward compatibility
-- Added 20+ predefined filters
+✅ **Deployed and Working**: Apps Script live with your specific sheet  
+✅ **Cost Optimized**: Single query replaces multiple expensive calls  
+✅ **Production Ready**: Simplified, clean codebase  
+✅ **Documented**: Complete setup and usage guides  
+
+**Start with**: `quickTestYourSheet()` - Your data, optimized costs, one function call! 🎉

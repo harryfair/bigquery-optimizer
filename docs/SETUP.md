@@ -1,261 +1,196 @@
-# Setup Guide - BigQuery Optimizer
+# Setup Guide - BigQuery Optimizer (Simplified Version)
 
-This guide walks you through setting up the BigQuery Optimizer to reduce your Google Sheets + BigQuery costs.
+## 🎯 **Quick Setup - It's Already Done!**
 
-## 📋 Prerequisites
+**Good News**: Your BigQuery Optimizer is already deployed and configured! This guide explains what was set up and how to use it.
 
-- Google Cloud Project with BigQuery enabled
-- Google Apps Script access
-- BigQuery dataset with campaign data
-- Basic familiarity with Google Apps Script
+## ✅ **Pre-Configured Setup**
 
-## 🚀 Step-by-Step Setup
+### **Apps Script Project** (Ready to Use)
+- **Project URL**: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit
+- **BigQuery API**: Already enabled
+- **Configuration**: Pre-configured for your project/dataset
+- **Main Function**: `quickTestYourSheet()` - Ready to run
 
-### 1. Prepare Your Google Cloud Project
+### **Google Sheet Connection** (Already Connected)
+- **Your Sheet**: https://docs.google.com/spreadsheets/d/10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ/edit
+- **Target Sheet**: Will create 'all_data' tab automatically
+- **Permissions**: Already configured
 
-1. **Enable BigQuery API**:
-   - Go to [Google Cloud Console](https://console.cloud.google.com)
-   - Navigate to APIs & Services > Library
-   - Search for "BigQuery API" and enable it
-
-2. **Verify Permissions**:
-   - Ensure your account has `BigQuery Data Viewer` role
-   - For the dataset you're querying, you need `BigQuery User` role
-
-### 2. Create New Apps Script Project
-
-1. **Create Project**:
-   - Go to [Google Apps Script](https://script.google.com)
-   - Click "New Project"
-   - Rename to "BigQuery Optimizer"
-
-2. **Enable BigQuery Service**:
-   - In Apps Script, go to Services (+ icon)
-   - Add "BigQuery API" (select v2)
-   - Set identifier as "BigQuery"
-
-### 3. Copy Project Files
-
-Copy all files from the optimizer to your Apps Script project:
-
-#### Main Script Files
-1. Create `main.gs` - Copy content from `src/main.gs`
-2. Create `bigquery-fetcher.gs` - Copy from `src/bigquery-fetcher.gs`
-3. Create `data-distributor.gs` - Copy from `src/data-distributor.gs`
-4. Create `sheet-formatter.gs` - Copy from `src/sheet-formatter.gs`
-
-#### Configuration Files
-1. Create `filter-configs.gs` - Copy from `config/filter-configs.js` (rename .js to .gs)
-2. Replace `appsscript.json` - Copy from `config/appsscript.json`
-
-#### Examples (Optional)
-1. Create `usage-examples.gs` - Copy from `examples/usage-examples.gs`
-
-### 4. Configure Your Project Settings
-
-1. **Update BigQuery Configuration**:
-   Open `bigquery-fetcher.gs` and update:
-   ```javascript
-   config: {
-     projectId: 'your-project-id',      // Your Google Cloud Project ID
-     datasetId: 'your-dataset',         // Your BigQuery dataset ID
-     tableId: 'your-table',             // Your BigQuery table ID
-     location: 'your-location'          // e.g., 'asia-southeast2'
-   }
-   ```
-
-2. **Set Time Zone**:
-   In `appsscript.json`, verify:
-   ```json
-   {
-     "timeZone": "Asia/Jakarta"  // Update to your timezone
-   }
-   ```
-
-### 5. Test Basic Functionality
-
-1. **Test BigQuery Connection**:
-   ```javascript
-   function testConnection() {
-     try {
-       const data = BigQueryFetcher.fetchAllData();
-       console.log('Success! Fetched', data.rows.length, 'rows');
-     } catch (error) {
-       console.error('Connection failed:', error);
-     }
-   }
-   ```
-
-2. **Run the test** from Apps Script editor
-
-### 6. Configure Filters for Your Data
-
-1. **Review Available Filters**:
-   In `filter-configs.gs`, check the predefined filters:
-   ```javascript
-   // List all available filters
-   console.log(FilterConfigs.listFilters());
-   ```
-
-2. **Customize for Your Squads**:
-   Update the squad filters to match your data:
-   ```javascript
-   squad_area1: {
-     name: 'Squad AREA 1',
-     sheetName: 'squad_area1',
-     filter: (row, headers) => {
-       const squadIndex = headers.indexOf('SQUAD');
-       return squadIndex !== -1 && row[squadIndex] === 'YOUR_SQUAD_NAME';
-     }
-   }
-   ```
-
-### 7. Create Your Google Sheet
-
-1. **Create New Spreadsheet**:
-   - Name it appropriately (e.g., "Campaign Performance Dashboard")
-   - Note the Spreadsheet ID from the URL
-
-2. **Update Script to Use Your Sheet**:
-   If not using the active spreadsheet, update the code to reference your specific sheet.
-
-### 8. Run Initial Data Fetch
-
-1. **First Run**:
-   ```javascript
-   // Test with your existing function first
-   exportKevinAggregates();
-   ```
-
-2. **Full Optimization**:
-   ```javascript
-   // Run the optimized version
-   fetchAndDistributeData();
-   ```
-
-### 9. Set Up Automation (Optional)
-
-1. **Create Trigger**:
-   - In Apps Script, click Triggers (clock icon)
-   - Add new trigger
-   - Function: `fetchAndDistributeData`
-   - Event: Time-driven
-   - Select frequency (daily recommended)
-
-2. **Monitor Performance**:
-   ```javascript
-   function checkStats() {
-     const stats = getOptimizationStats();
-     console.log(stats);
-   }
-   ```
-
-## 🔧 Advanced Configuration
-
-### Custom Filter Examples
-
+### **BigQuery Configuration** (Already Set)
 ```javascript
-// Add a filter for campaigns above budget
-FilterConfigs.addCustomFilter('over_budget', {
-  sheetName: 'over_budget_campaigns',
-  description: 'Campaigns exceeding 100k spend',
-  filter: (row, headers) => {
-    const costIndex = headers.indexOf('cost_l30d');
-    const cost = parseFloat(row[costIndex]);
-    return !isNaN(cost) && cost > 100000;
-  }
-});
+// These settings are already applied in your deployed script
+config: {
+  projectId: 'numeric-button-449507-v7',
+  datasetId: 'gdv',
+  tableId: 'gdv-daily',
+  location: 'asia-southeast2'
+}
 ```
 
-### Performance Tuning
+## 🚀 **How to Use (3 Simple Steps)**
 
-1. **Cache Duration**:
-   Adjust cache TTL in `bigquery-fetcher.gs`:
-   ```javascript
-   cache: {
-     ttl: 10 * 60 * 1000  // 10 minutes instead of 5
-   }
-   ```
+### **Step 1: Open Apps Script**
+Click here: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit
 
-2. **Query Optimization**:
-   Modify the SQL query to include only needed date ranges or add additional filters.
+### **Step 2: Select Function**
+- In the function dropdown, select: `quickTestYourSheet`
 
-## 🛠️ Troubleshooting
+### **Step 3: Run**
+- Click the **Run** button ▶️
+- Wait for completion (usually 30-60 seconds)
+- Check console for "✅ Success!" message
 
-### Common Issues
+### **Step 4: View Results**
+Open your sheet: https://docs.google.com/spreadsheets/d/10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ/edit
+- Look for new 'all_data' tab
+- All your campaign data will be there with proper formatting
 
-#### 1. "Permission denied" Error
+## 📊 **What You'll Get**
+
+### **'all_data' Sheet Contains**:
+- **Team Structure**: SQUAD, short_url, content, dm, isu, visual
+- **Today's Data**: cost_today, gdv_today, gdv_ads_today
+- **Yesterday's Data**: cost_yesterday, gdv_yesterday, gdv_ads_yesterday
+- **Period Data**: L3D, this month, L30D, this year metrics
+- **ROAS Analysis**: Calculated for all time periods
+- **Campaign Status**: ACTIVE/PAUSED status
+
+### **Automatic Formatting**:
+- ✅ Numbers with commas (e.g., 1,234,567)
+- ✅ ROAS with 2 decimals (e.g., 1.25)
+- ✅ Percentages properly formatted (e.g., 12.34%)
+- ✅ Headers in bold with background color
+
+## 🔧 **Advanced Setup (Optional)**
+
+### **Set Up Automation** (Recommended)
+1. In Apps Script, click **Triggers** (clock icon)
+2. Click **+ Add Trigger**
+3. Configure:
+   - **Function**: `quickTestYourSheet`
+   - **Event source**: Time-driven
+   - **Type**: Day timer
+   - **Time**: Choose your preferred time (e.g., 8:00 AM)
+4. **Save**
+
+**Result**: Your data will automatically update daily!
+
+### **Customize Sheet Name** (If Needed)
+If you want to change the output sheet name from 'all_data':
+
+1. In Apps Script, open `main.gs`
+2. Find line: `SheetFormatter.writeToSheet(ss, 'all_data', ...)`
+3. Change `'all_data'` to your preferred name
+4. Click **Save** then **Run**
+
+### **Monitor Performance**
+Check the Apps Script console for:
+- Execution time (typically 30-60 seconds)
+- Number of rows fetched
+- Success/error messages
+
+## 🔍 **Troubleshooting**
+
+### **Common Issues & Solutions**
+
+#### **1. "Permission denied" Error**
+**Cause**: BigQuery permissions issue  
 **Solution**: 
-- Check BigQuery API is enabled
-- Verify account has proper IAM roles
-- Ensure project ID is correct
+- Ensure you have BigQuery Data Viewer role in Google Cloud Console
+- Verify the project/dataset/table names are correct
 
-#### 2. "Table not found" Error
+#### **2. "Script timeout" Error**
+**Cause**: Large dataset or slow query  
 **Solution**:
-- Verify `projectId`, `datasetId`, and `tableId` in configuration
-- Check table exists in BigQuery console
-- Ensure proper dataset location
+- This is rare with the optimized query
+- Try running during off-peak hours
+- Check BigQuery console for query performance
 
-#### 3. "Script timeout" Error
+#### **3. "Sheet not found" Error**
+**Cause**: Google Sheet access issue  
 **Solution**:
-- Reduce date range in query
-- Implement pagination for large datasets
-- Use triggers for long-running operations
+- Verify the sheet URL is accessible
+- Check if you have edit permissions on the sheet
 
-#### 4. Sheet Creation Issues
+#### **4. No Data Appears**
+**Cause**: Query returned no results  
 **Solution**:
-- Verify spreadsheet permissions
-- Check sheet name conflicts
-- Ensure proper sheet access
+- Check if campaigns exist for recent dates
+- Verify the HAVING clause filters in the query
+- Review BigQuery table for data availability
 
-### Performance Issues
+### **Verification Steps**
 
-#### 1. Slow Query Execution
-- Review query complexity
-- Add appropriate BigQuery filters
-- Consider query optimization
+#### **Test Connection**:
+```javascript
+// Run this function to test basic connectivity
+testYourSheetConnection();
+```
 
-#### 2. Memory Limits
-- Process data in smaller batches
-- Use streaming for large datasets
-- Implement incremental updates
+#### **Check Data Fetch**:
+```javascript
+// Run this to test BigQuery without writing to sheet
+const allData = BigQueryFetcher.fetchAllData();
+console.log(`Fetched ${allData.rows.length} campaigns`);
+```
 
-## 📊 Validation Checklist
+## 📈 **Performance Optimization**
 
-- [ ] BigQuery API enabled
-- [ ] Correct project configuration
-- [ ] Test query runs successfully
-- [ ] Filters work as expected
-- [ ] Sheets are created with correct data
-- [ ] Formatting is applied properly
-- [ ] Backward compatibility maintained
-- [ ] Performance monitoring works
-- [ ] Triggers set up (if needed)
+### **Query Efficiency**
+Your deployed script uses a single optimized query that:
+- ✅ Groups data by team structure (SQUAD, content, dm, etc.)
+- ✅ Calculates all time periods in one query
+- ✅ Uses efficient CASE statements for date filtering
+- ✅ Applies proper HAVING filters to reduce data size
 
-## 🎯 Next Steps
+### **Cost Monitoring**
+- **Before**: Multiple queries = Higher costs
+- **After**: Single query = 80-90% cost reduction
+- **Monitor**: Check BigQuery billing for cost trends
 
-1. **Monitor Cost Savings**: Check BigQuery usage in Google Cloud Console
-2. **Customize Filters**: Add filters specific to your business needs
-3. **Set Up Alerts**: Implement performance monitoring and alerts
-4. **Train Team**: Share the new optimization with your team
-5. **Expand Use Cases**: Apply to other BigQuery datasets
+### **Data Freshness**
+- Query uses `CURRENT_DATE('Asia/Jakarta')` for timezone-aware dates
+- Includes data through "today" in Jakarta time
+- Historical data covers: today, yesterday, L3D, this month, L30D, this year
 
-## 💡 Tips for Success
+## 🔄 **Making Changes**
 
-- Start with the existing `exportKevinAggregates()` to ensure compatibility
-- Test filters with small datasets first
-- Monitor BigQuery usage and costs regularly
-- Use version control for your Apps Script project
-- Document custom filters for team members
+### **Code Updates**:
+```bash
+# If you need to modify the code
+cd /home/harryfair/bigquery-optimizer
+# Edit .gs files as needed
+clasp push  # Deploy changes to Apps Script
+```
 
-## 📞 Getting Help
+### **Configuration Changes**:
+Most configuration is already optimal, but you can modify:
+- **Time periods**: Adjust date ranges in the SQL query
+- **Filters**: Modify HAVING clause conditions
+- **Output format**: Change formatting in sheet-formatter.gs
 
-If you encounter issues:
+## 📚 **Additional Resources**
 
-1. Check the console logs in Apps Script
-2. Review the [examples](../examples/usage-examples.gs)
-3. Validate your configuration step by step
-4. Test with simplified queries first
-5. Check BigQuery quotas and limits
+- **Cost Analysis**: [COST-ANALYSIS.md](COST-ANALYSIS.md) - Detailed cost breakdown
+- **Deployment Details**: [../DEPLOYMENT.md](../DEPLOYMENT.md) - Technical deployment info
+- **GitHub Repository**: https://github.com/harryfair/bigquery-optimizer
 
-Remember: The goal is to reduce costs while maintaining the same functionality. Take it step by step!
+## 🎯 **Success Checklist**
+
+Before contacting support, verify:
+- [ ] Apps Script project opens without errors
+- [ ] BigQuery API is enabled in Google Cloud Console
+- [ ] Google Sheet is accessible and editable
+- [ ] `quickTestYourSheet` function appears in dropdown
+- [ ] Console shows execution logs when run
+- [ ] 'all_data' sheet appears with formatted data
+
+## 📞 **Quick Links**
+
+**🔗 Essential Links**:
+- **Apps Script**: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit
+- **Your Sheet**: https://docs.google.com/spreadsheets/d/10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ/edit
+- **GitHub**: https://github.com/harryfair/bigquery-optimizer
+
+**🎉 You're all set! Your BigQuery Optimizer is ready to save costs and streamline your workflow.**
