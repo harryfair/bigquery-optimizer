@@ -1,0 +1,9 @@
+**/**
+!*.gs
+!appsscript.json
+.clasp.json
+README.md
+docs/
+config/
+src/
+examples/
