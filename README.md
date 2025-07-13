@@ -23,15 +23,17 @@ A simplified Google Apps Script solution that reduces BigQuery costs by 80-90% b
 - **After**: 1 query/day × 30 days = 30 queries/month → ~$1.50/month
 - **Savings**: $6/month (80% reduction)
 
-## 📁 **Project Structure (Simplified)**
+## 📁 **Project Structure**
 
 ```
 bigquery-optimizer/
-├── main.gs                    # Main function: quickTestYourSheet()
-├── bigquery-fetcher.gs        # Simplified BigQuery data fetching
-├── sheet-formatter.gs         # Basic Google Sheets formatting
+├── main.gs                    # Core automation function: automatedDailyUpdate()
+├── bigquery-fetcher.gs        # Optimized BigQuery data fetching
+├── sheet-formatter.gs         # Google Sheets formatting with date support
 ├── appsscript.json            # Apps Script configuration
-└── docs/                      # Documentation
+├── README.md                  # Project overview and automation guide
+├── DEPLOYMENT.md              # Technical deployment and setup details
+└── AUTOMATION-GUIDE.md        # Complete automation setup guide
 ```
 
 ## 🔧 **Core Functions**
@@ -212,9 +214,8 @@ BigQuery (ONE call) → All Data → Local Filtering → Multiple Squad Sheets
 
 ## 📚 **Documentation**
 
-- [Setup Guide](docs/SETUP.md) - Detailed setup instructions
-- [Cost Analysis](docs/COST-ANALYSIS.md) - ROI and savings breakdown
-- [Deployment Summary](DEPLOYMENT.md) - Current deployment details
+- [AUTOMATION-GUIDE.md](AUTOMATION-GUIDE.md) - Complete automation setup guide
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Technical deployment and configuration details
 
 ## 🚀 **Current Features & Future Expansion**
 
