@@ -6,13 +6,27 @@
 // Your specific sheet ID
 const YOUR_SHEET_ID = '10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ';
 
-// Squad external sheet IDs
+// Squad external sheet IDs - try common variations
 const SQUAD_SHEETS = {
   'AREA 1': '1XrTr5XO6EjuU_h-Y7k0AxCJAoNmmyqDmUzsFlRqcCAs',
-  'HOSPITAL & INBOUND': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
-  'AREA 3': '1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU',
+  'Area 1': '1XrTr5XO6EjuU_h-Y7k0AxCJAoNmmyqDmUzsFlRqcCAs',
+  'AREA1': '1XrTr5XO6EjuU_h-Y7k0AxCJAoNmmyqDmUzsFlRqcCAs',
+  
   'AREA 2': '1sU117oq1vwvTQR7WY_qgulAVQkF_2PhC0_wEaD9liNs',
-  'PROGRAM': '1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU'
+  'Area 2': '1sU117oq1vwvTQR7WY_qgulAVQkF_2PhC0_wEaD9liNs',
+  'AREA2': '1sU117oq1vwvTQR7WY_qgulAVQkF_2PhC0_wEaD9liNs',
+  
+  'AREA 3': '1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU',
+  'Area 3': '1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU',
+  'AREA3': '1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU',
+  
+  'PROGRAM': '1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU',
+  'Program': '1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU',
+  
+  'HOSPITAL': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
+  'Hospital': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
+  'INBOUND': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
+  'Inbound': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo'
 };
 
 /**
@@ -33,6 +47,75 @@ function testYourSheetConnection() {
   } catch (error) {
     console.error('❌ Failed to connect to your sheet:', error);
     return false;
+  }
+}
+
+/**
+ * AUTOMATED COMPLETE WORKFLOW - Fetch data and distribute to all squads
+ * THIS IS THE MAIN AUTOMATION FUNCTION
+ */
+function automatedDailyUpdate() {
+  try {
+    console.log('🤖 Starting automated daily update...');
+    const startTime = new Date();
+    
+    // Step 1: Fetch all data from BigQuery
+    console.log('📊 Step 1: Fetching data from BigQuery...');
+    if (!testYourSheetConnection()) {
+      throw new Error('Cannot connect to your sheet');
+    }
+    
+    const ss = getYourSpreadsheet();
+    const allData = BigQueryFetcher.fetchAllData();
+    console.log(`✅ Fetched ${allData.rows.length} rows from BigQuery`);
+    
+    // Step 2: Save to main sheet
+    console.log('📝 Step 2: Saving to main all_data sheet...');
+    SheetFormatter.writeToSheet(ss, 'all_data', allData.headers, allData.rows);
+    console.log('✅ Main sheet updated');
+    
+    // Step 3: Distribute to all squad sheets
+    console.log('🚀 Step 3: Distributing to all squad sheets...');
+    // Convert BigQuery format to sheet format for distribution
+    const formattedRows = allData.rows.map(row => {
+      // Handle BigQuery format
+      if (row.f && Array.isArray(row.f)) {
+        return row.f.map(cell => cell.v === null || cell.v === undefined ? '' : cell.v);
+      }
+      // Handle array format
+      if (Array.isArray(row)) {
+        return row.map(value => value === null || value === undefined ? '' : value);
+      }
+      return [String(row)];
+    });
+    
+    const distributionResults = distributeToAllSquadsFromData({headers: allData.headers, rows: formattedRows});
+    
+    // Step 4: Summary
+    const endTime = new Date();
+    const duration = Math.round((endTime - startTime) / 1000);
+    
+    console.log('🎉 AUTOMATION COMPLETE!');
+    console.log(`⏱️ Total time: ${duration} seconds`);
+    console.log(`📊 Main sheet: ${allData.rows.length} rows`);
+    distributionResults.forEach(result => {
+      if (result.error) {
+        console.log(`❌ ${result.squadName}: ${result.error}`);
+      } else {
+        console.log(`✅ ${result.squadName}: ${result.rowCount} rows`);
+      }
+    });
+    
+    return {
+      success: true,
+      totalRows: allData.rows.length,
+      duration: duration,
+      distributionResults: distributionResults
+    };
+    
+  } catch (error) {
+    console.error('❌ Automation failed:', error);
+    throw error;
   }
 }
 
@@ -130,39 +213,53 @@ function distributeToAllSquads() {
     
     console.log(`📊 Read ${rows.length} rows from existing all_data sheet`);
     
-    // Distribute to each squad/group
-    const results = [];
+    return distributeToAllSquadsFromData({headers, rows});
     
-    // Individual squads
-    const individualSquads = ['AREA 1', 'AREA 2', 'AREA 3', 'PROGRAM'];
-    for (const squadName of individualSquads) {
+  } catch (error) {
+    console.error('❌ Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Distribute data to ALL squad sheets from provided data (used by automation)
+ */
+function distributeToAllSquadsFromData(allData) {
+  // Get unique squad values from data first
+  const squadIndex = allData.headers.indexOf('SQUAD');
+  if (squadIndex === -1) {
+    console.error('❌ SQUAD column not found in data');
+    return [];
+  }
+  
+  const actualSquads = [...new Set(allData.rows.map(row => row[squadIndex]))].filter(squad => squad);
+  console.log('🔍 Found actual squads in data:', actualSquads);
+  
+  // Distribute to each squad/group
+  const results = [];
+  
+  // Try to distribute each actual squad found in data
+  for (const actualSquad of actualSquads) {
+    const squadName = actualSquad.toString();
+    const sheetId = SQUAD_SHEETS[squadName];
+    
+    if (sheetId) {
       try {
-        const result = distributeToSquad({headers, rows}, squadName, SQUAD_SHEETS[squadName]);
+        const result = distributeToSquad(allData, squadName, sheetId);
         results.push(result);
         console.log(`✅ ${squadName}: ${result.rowCount} rows → ${result.sheetName}`);
       } catch (error) {
         console.error(`❌ ${squadName}: ${error.message}`);
         results.push({squadName, error: error.message});
       }
+    } else {
+      console.log(`⚠️ No sheet mapping found for squad: "${squadName}"`);
+      results.push({squadName, error: `No sheet mapping found for "${squadName}"`});
     }
-    
-    // Combined HOSPITAL & INBOUND sheet
-    try {
-      const result = distributeCombinedHospitalInbound({headers, rows}, SQUAD_SHEETS['HOSPITAL & INBOUND']);
-      results.push(result);
-      console.log(`✅ HOSPITAL & INBOUND: ${result.rowCount} rows → ${result.sheetName}`);
-    } catch (error) {
-      console.error(`❌ HOSPITAL & INBOUND: ${error.message}`);
-      results.push({squadName: 'HOSPITAL & INBOUND', error: error.message});
-    }
-    
-    console.log('🎉 Distribution complete!');
-    return results;
-    
-  } catch (error) {
-    console.error('❌ Error:', error);
-    throw error;
   }
+  
+  console.log('🎉 Distribution complete!');
+  return results;
 }
 
 /**

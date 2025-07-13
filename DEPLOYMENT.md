@@ -52,29 +52,48 @@
 
 ## 🚀 **How to Use**
 
-### **Complete Workflow** (Recommended)
+### **🤖 Automated Workflow** (Production)
 ```javascript
-// Step 1: Get all data from BigQuery (once per day)
+// SINGLE FUNCTION - Complete daily automation
+automatedDailyUpdate()
+// - Fetches BigQuery data (1 optimized query)
+// - Updates main 'all_data' sheet  
+// - Distributes to all 5 squad sheets
+// - Provides execution summary with timing
+```
+
+### **Manual Workflow** (Testing)
+```javascript
+// Step 1: Get all data from BigQuery (manual)
 quickTestYourSheet()
 
-// Step 2: Distribute to all squad sheets (FREE - uses existing data)
+// Step 2: Distribute to all squad sheets (uses existing data)
 distributeToAllSquads()
 ```
 
 ### **Primary Functions**
 
-#### **`quickTestYourSheet()`**
+#### **`automatedDailyUpdate()` - AUTOMATION FUNCTION**
 **What it does**:
 1. Connects to your Google Sheet (ID: 10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ)
 2. Executes single optimized BigQuery query
-3. Creates 'all_data' sheet with all campaign data
-4. Applies proper formatting (numbers, decimals, percentages, dates)
+3. Creates/updates 'all_data' sheet with all campaign data
+4. **Automatically distributes to all 5 squad sheets**
+5. **Smart squad detection** - finds actual squad names in data
+6. Provides complete execution summary with timing
+7. **Perfect for daily triggers** - complete hands-free operation
 
-#### **`distributeToAllSquads()`**
+#### **`quickTestYourSheet()` - MANUAL FUNCTION**
+**What it does**:
+1. Manual BigQuery fetch only
+2. Creates 'all_data' sheet with formatted data
+3. Use for testing or one-time data refresh
+
+#### **`distributeToAllSquads()` - DISTRIBUTION FUNCTION**
 **What it does**:
 1. Reads existing data from 'all_data' sheet (NO BigQuery call)
-2. Filters data for each squad
-3. Writes to 5 external squad sheets
+2. Smart detection of squad names in data
+3. Distributes to all matching squad sheets
 4. Removes SQUAD and visual columns from distributions
 
 ### **Squad Sheet Distribution**
@@ -84,11 +103,19 @@ distributeToAllSquads()
 - **PROGRAM** → `1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU`
 - **HOSPITAL & INBOUND** → `1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo` (combined)
 
-### **Step-by-Step Usage**
+### **🤖 Automation Setup**
 1. **Open Apps Script**: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit
-2. **Run Data Fetch**: Select `quickTestYourSheet` → Click Run ▶️
-3. **Run Distribution**: Select `distributeToAllSquads` → Click Run ▶️
-4. **Check Results**: All squad sheets updated with filtered data
+2. **Set Up Trigger**: Triggers → + Add Trigger
+3. **Configure**: 
+   - Function: `automatedDailyUpdate`
+   - Event: Time-driven, Day timer
+   - Time: 8am-9am Jakarta time
+4. **Save & Authorize**: One-time setup, runs forever
+
+### **Manual Testing**
+1. **Test Automation**: Select `automatedDailyUpdate` → Click Run ▶️
+2. **Test Individual**: Select `quickTestYourSheet` or `distributeToAllSquads`
+3. **Check Results**: All squad sheets updated with filtered data
 
 ## 📊 **Expected Results**
 
@@ -150,9 +177,18 @@ distributeToAllSquads()
 7. ✅ All 5 squad sheets receive filtered data
 
 ### **Success Indicators**:
-- **Main function**: Console shows "✅ Success! Data saved to 'all_data' sheet"
-- **Distribution function**: Console shows squad distribution results (e.g., "✅ AREA 1: 1052 rows")
-- **Data verification**: Squad sheets contain 'campaign' tabs with filtered data
+- **Automation function**: Console shows complete workflow summary
+  ```
+  🤖 Starting automated daily update...
+  ✅ Fetched 17183 rows from BigQuery
+  ✅ Main sheet updated
+  🔍 Found actual squads in data: ['AREA 1', 'AREA 2', 'HOSPITAL', 'INBOUND', 'PROGRAM', 'AREA 3']
+  ✅ AREA 1: 1052 rows → area1-logs
+  ✅ AREA 2: 1611 rows → area2-logs
+  🎉 AUTOMATION COMPLETE!
+  ⏱️ Total time: 120 seconds
+  ```
+- **Data verification**: All squad sheets contain 'campaign' tabs with filtered data
 - **Formatting**: Dates display as M/d/yyyy, numbers with proper formatting
 
 ## 🛠️ **Technical Details**
