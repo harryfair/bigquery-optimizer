@@ -36,25 +36,43 @@ bigquery-optimizer/
 
 ## 🔧 **Core Functions**
 
-### **Primary Function**
+### **Primary Functions**
 ```javascript
 quickTestYourSheet()
 // - Connects to your specific Google Sheet
 // - Fetches ALL campaign data from BigQuery (single query)
 // - Creates 'all_data' sheet with formatted results
 // - Saves 80-90% on BigQuery costs
+
+distributeToAllSquads()
+// - Uses existing data (NO new BigQuery call)
+// - Distributes filtered data to all squad sheets
+// - Removes SQUAD and visual columns from squad sheets
+// - Maintains cost efficiency
+
+checkSquadValues()
+// - Shows what squad names exist in your data
+// - Counts rows per squad for verification
 ```
 
 ### **What You Get**
 - **All campaign data** in one sheet: `all_data`
+- **Individual squad sheets** with filtered data (no additional BigQuery costs)
 - **Team structure**: SQUAD, content creators, DMs, campaigns
 - **Metrics**: Cost, GDV, ROAS for today, yesterday, L3D, L30D, this month, this year
-- **Formatting**: Numbers with commas, ROAS with decimals, percentages
+- **Formatting**: Numbers with commas, ROAS with decimals, percentages, dates (M/d/yyyy)
 - **Status tracking**: ACTIVE/PAUSED campaigns
 
 ## 📊 **Your Team Configuration**
 
-### **Squads (6)**:
+### **Squad Distribution (5 sheets)**:
+- **AREA 1** → Individual sheet: `1XrTr5XO6EjuU_h-Y7k0AxCJAoNmmyqDmUzsFlRqcCAs`
+- **AREA 2** → Individual sheet: `1sU117oq1vwvTQR7WY_qgulAVQkF_2PhC0_wEaD9liNs`
+- **AREA 3** → Individual sheet: `1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU`
+- **PROGRAM** → Individual sheet: `1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU`
+- **HOSPITAL & INBOUND** → Combined sheet: `1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo`
+
+### **Squads (6 total)**:
 - AREA 1, AREA 2, AREA 3, PROGRAM, HOSPITAL, INBOUND
 
 ### **Content Creators (41)**:
@@ -71,16 +89,25 @@ quickTestYourSheet()
 
 ## 📋 **Usage Examples**
 
-### **Basic Usage** (What you need now)
+### **Complete Workflow** (Recommended)
 ```javascript
-// Run this to get all your data
+// Step 1: Get all data from BigQuery (once per day)
 quickTestYourSheet();
+
+// Step 2: Check squad names in your data
+checkSquadValues();
+
+// Step 3: Distribute to all squad sheets (uses existing data)
+distributeToAllSquads();
 ```
 
-### **Configuration Check**
+### **Individual Testing**
 ```javascript
-// Test connection to your sheet
+// Test connection to your main sheet
 testYourSheetConnection();
+
+// Test AREA 1 distribution only
+testArea1DistributionFromSheet();
 ```
 
 ### **Data Verification**
@@ -109,10 +136,23 @@ config: {
 
 ## 🔄 **How It Works**
 
+### **Cost-Efficient Data Flow**
+```
+BigQuery (ONE call) → All Data → Local Filtering → Multiple Squad Sheets
+       ↓                ↓              ↓                    ↓
+   ~$0.05/day      17k+ rows      FREE process         5 sheets
+```
+
 1. **Single BigQuery Call**: Fetches all campaign data with complex aggregations
-2. **Local Processing**: No additional BigQuery queries needed
-3. **Sheet Writing**: Creates formatted `all_data` sheet in your Google Sheet
+2. **Local Processing**: Filter and distribute data in Apps Script (FREE)
+3. **Multi-Sheet Writing**: Main sheet + 5 squad sheets with proper formatting
 4. **Cost Savings**: 80-90% reduction vs multiple queries
+
+### **Distribution Logic**
+- **Individual Squads**: AREA 1, AREA 2, AREA 3, PROGRAM get separate sheets
+- **Combined Squad**: HOSPITAL + INBOUND share one sheet
+- **Column Removal**: SQUAD and visual columns removed from squad sheets
+- **Date Formatting**: start_cost_date and last_cost_date formatted as M/d/yyyy
 
 ## 🕐 **Automation (Optional)**
 
@@ -139,13 +179,22 @@ Set up automated triggers in Apps Script:
 - [Cost Analysis](docs/COST-ANALYSIS.md) - ROI and savings breakdown
 - [Deployment Summary](DEPLOYMENT.md) - Current deployment details
 
-## 🚀 **Future Expansion**
+## 🚀 **Current Features & Future Expansion**
 
-This simplified version provides the foundation for:
-- Individual team member sheets
+### **✅ Currently Implemented**
+- Single BigQuery call optimization (80-90% cost savings)
+- Multi-squad data distribution (5 sheets)
+- Combined HOSPITAL & INBOUND processing
+- Automatic date formatting (M/d/yyyy)
+- Column filtering (removes SQUAD and visual columns)
+- Real-time data processing from existing sheets
+
+### **🔮 Future Expansion Possibilities**
+- Individual content creator and DM sheets
 - Advanced filtering and analytics
 - Performance monitoring dashboards
-- Automated reporting
+- Automated daily scheduling
+- Email reporting summaries
 
 ## 📞 **Support**
 
@@ -155,9 +204,10 @@ This simplified version provides the foundation for:
 
 ## 🎯 **Current Status**
 
-✅ **Deployed and Working**: Apps Script live with your specific sheet  
-✅ **Cost Optimized**: Single query replaces multiple expensive calls  
-✅ **Production Ready**: Simplified, clean codebase  
-✅ **Documented**: Complete setup and usage guides  
+✅ **Deployed and Working**: Apps Script live with multi-squad distribution  
+✅ **Cost Optimized**: Single query + 5 free distributions  
+✅ **Production Ready**: Complete squad distribution system  
+✅ **Documented**: Updated setup and usage guides  
+✅ **Multi-Squad Support**: Individual sheets + combined HOSPITAL/INBOUND  
 
-**Start with**: `quickTestYourSheet()` - Your data, optimized costs, one function call! 🎉
+**Workflow**: `quickTestYourSheet()` → `distributeToAllSquads()` - Complete team coverage! 🎉

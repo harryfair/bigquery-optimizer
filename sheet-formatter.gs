@@ -92,6 +92,10 @@ const SheetFormatter = {
         else if (lowerName.includes('ads/donasi')) {
           range.setNumberFormat('0.00%');
         }
+        // Format date columns
+        else if (lowerName.includes('date')) {
+          range.setNumberFormat('M/d/yyyy');
+        }
       });
       
     } catch (error) {
