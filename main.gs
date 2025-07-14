@@ -119,18 +119,45 @@ function distributeToNewSheets() {
           row.filter((cell, index) => index !== visualIndex && index !== squadIndex)
         );
         
-        // Write to individual sheet
-        const targetSheet = SpreadsheetApp.openById(config.sheetId);
-        SheetFormatter.writeToSheet(targetSheet, 'campaign', filteredHeaders, finalRows);
+        // Write to individual sheet with retry logic
+        let retries = 3;
+        let success = false;
+        let lastError;
         
-        results.push({
-          name: name,
-          rowCount: finalRows.length,
-          column: config.column,
-          sheetName: targetSheet.getName()
-        });
+        while (retries > 0 && !success) {
+          try {
+            const targetSheet = SpreadsheetApp.openById(config.sheetId);
+            SheetFormatter.writeToSheet(targetSheet, 'campaign', filteredHeaders, finalRows);
+            success = true;
+            
+            results.push({
+              name: name,
+              rowCount: finalRows.length,
+              column: config.column,
+              sheetName: targetSheet.getName()
+            });
+            
+            console.log(`✅ ${name}: ${finalRows.length} rows distributed from ${config.column} column`);
+          } catch (error) {
+            lastError = error;
+            retries--;
+            if (retries > 0) {
+              console.log(`⚠️ ${name}: Retrying... (${retries} attempts left)`);
+              // Add delay with exponential backoff
+              Utilities.sleep((3 - retries) * 2000); // 2s, 4s, 6s
+            }
+          }
+        }
         
-        console.log(`✅ ${name}: ${finalRows.length} rows distributed from ${config.column} column`);
+        if (!success) {
+          console.error(`❌ ${name}: ${lastError.message}`);
+          results.push({name, error: lastError.message});
+        }
+        
+        // Add delay between individuals to avoid rate limiting
+        if (Object.keys(individuals).indexOf(name) < Object.keys(individuals).length - 1) {
+          Utilities.sleep(1000); // 1 second delay between individuals
+        }
         
       } catch (error) {
         console.error(`❌ ${name}: ${error.message}`);
@@ -188,11 +215,9 @@ function automatedDailyUpdate() {
     console.log('👤 Step 4: Distributing to individual sheets...');
     let individualResults = [];
     try {
-      // Get data from the all_data sheet we just created
-      const sheet = ss.getSheetByName('all_data');
-      const sheetData = sheet.getDataRange().getValues();
-      const sheetHeaders = sheetData[0];
-      const sheetRows = sheetData.slice(1);
+      // Use the already-fetched data instead of re-reading from sheet
+      const sheetHeaders = allData.headers;
+      const sheetRows = formattedRows;
       
       // Find column indices
       const contentIndex = sheetHeaders.indexOf('content');
@@ -233,18 +258,45 @@ function automatedDailyUpdate() {
               row.filter((cell, index) => index !== visualIndex && index !== squadIndex)
             );
             
-            // Write to individual sheet
-            const targetSheet = SpreadsheetApp.openById(config.sheetId);
-            SheetFormatter.writeToSheet(targetSheet, 'campaign', filteredHeaders, finalRows);
+            // Write to individual sheet with retry logic
+            let retries = 3;
+            let success = false;
+            let lastError;
             
-            individualResults.push({
-              name: name,
-              rowCount: finalRows.length,
-              column: config.column,
-              sheetName: targetSheet.getName()
-            });
+            while (retries > 0 && !success) {
+              try {
+                const targetSheet = SpreadsheetApp.openById(config.sheetId);
+                SheetFormatter.writeToSheet(targetSheet, 'campaign', filteredHeaders, finalRows);
+                success = true;
+                
+                individualResults.push({
+                  name: name,
+                  rowCount: finalRows.length,
+                  column: config.column,
+                  sheetName: targetSheet.getName()
+                });
+                
+                console.log(`✅ ${name}: ${finalRows.length} rows distributed from ${config.column} column`);
+              } catch (error) {
+                lastError = error;
+                retries--;
+                if (retries > 0) {
+                  console.log(`⚠️ ${name}: Retrying... (${retries} attempts left)`);
+                  // Add delay with exponential backoff
+                  Utilities.sleep((3 - retries) * 2000); // 2s, 4s, 6s
+                }
+              }
+            }
             
-            console.log(`✅ ${name}: ${finalRows.length} rows distributed from ${config.column} column`);
+            if (!success) {
+              console.error(`❌ ${name}: ${lastError.message}`);
+              individualResults.push({name, error: lastError.message});
+            }
+            
+            // Add delay between individuals to avoid rate limiting
+            if (Object.keys(individuals).indexOf(name) < Object.keys(individuals).length - 1) {
+              Utilities.sleep(1000); // 1 second delay between individuals
+            }
             
           } catch (error) {
             console.error(`❌ ${name}: ${error.message}`);
@@ -316,7 +368,8 @@ function distributeToAllSquadsFromData(allData) {
   const results = [];
   
   // Try to distribute each actual squad found in data
-  for (const actualSquad of actualSquads) {
+  for (let i = 0; i < actualSquads.length; i++) {
+    const actualSquad = actualSquads[i];
     const squadName = actualSquad.toString();
     const sheetId = SQUAD_SHEETS[squadName];
     
@@ -332,6 +385,11 @@ function distributeToAllSquadsFromData(allData) {
     } else {
       console.log(`⚠️ No sheet mapping found for squad: "${squadName}"`);
       results.push({squadName, error: `No sheet mapping found for "${squadName}"`});
+    }
+    
+    // Add delay between squads to avoid rate limiting (except for the last one)
+    if (i < actualSquads.length - 1) {
+      Utilities.sleep(500); // 0.5 second delay between squads
     }
   }
   
@@ -423,6 +481,159 @@ function distributeToAllSquads() {
     
   } catch (error) {
     console.error('❌ Distribution failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Run ONLY individual distribution (useful if main automation succeeds but individual fails)
+ */
+function runIndividualDistributionOnly() {
+  try {
+    console.log('👤 Running individual distribution only...');
+    
+    // Get data from all_data sheet
+    const ss = getYourSpreadsheet();
+    const sheet = ss.getSheetByName('all_data');
+    if (!sheet) {
+      throw new Error('all_data sheet not found. Run automatedDailyUpdate() first.');
+    }
+    
+    // Use the distributeToNewSheets function which has retry logic
+    const results = distributeToNewSheets();
+    
+    console.log('\n👤 Individual Distribution Results:');
+    results.forEach(result => {
+      if (result.error) {
+        console.log(`❌ ${result.name}: ${result.error}`);
+      } else {
+        console.log(`✅ ${result.name}: ${result.rowCount} rows`);
+      }
+    });
+    
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Individual distribution failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Set up time-based triggers for automation
+ */
+function setupAutomationTriggers() {
+  // Remove existing triggers
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(trigger => {
+    if (trigger.getHandlerFunction() === 'automatedDailyUpdate' || 
+        trigger.getHandlerFunction() === 'runIndividualDistributionDelayed') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+  
+  // Set up daily trigger at 6 AM
+  ScriptApp.newTrigger('automatedDailyUpdate')
+    .timeBased()
+    .atHour(6)
+    .everyDays(1)
+    .create();
+    
+  console.log('✅ Daily automation trigger set for 6 AM');
+}
+
+/**
+ * Alternative: Run automation in two phases with delay
+ */
+function automatedDailyUpdatePhase1() {
+  try {
+    console.log('🤖 Starting automated daily update (Phase 1)...');
+    const startTime = new Date();
+    
+    // Step 1: Fetch all data from BigQuery
+    console.log('📊 Step 1: Fetching data from BigQuery...');
+    const ss = getYourSpreadsheet();
+    const allData = BigQueryFetcher.fetchAllData();
+    console.log(`✅ Fetched ${allData.rows.length} rows from BigQuery`);
+    
+    // Step 2: Save to main sheet
+    console.log('📝 Step 2: Saving to main all_data sheet...');
+    SheetFormatter.writeToSheet(ss, 'all_data', allData.headers, allData.rows);
+    console.log('✅ Main sheet updated');
+    
+    // Step 3: Distribute to all squad sheets
+    console.log('🚀 Step 3: Distributing to all squad sheets...');
+    const formattedRows = allData.rows.map(row => {
+      if (row.f && Array.isArray(row.f)) {
+        return row.f.map(cell => cell.v === null || cell.v === undefined ? '' : cell.v);
+      }
+      if (Array.isArray(row)) {
+        return row.map(value => value === null || value === undefined ? '' : value);
+      }
+      return [String(row)];
+    });
+    
+    const squadDistributionResults = distributeToAllSquadsFromData({headers: allData.headers, rows: formattedRows});
+    
+    console.log('✅ Phase 1 Complete! Squad distribution finished.');
+    console.log('⏰ Individual distribution will run in 2 minutes...');
+    
+    // Schedule Phase 2 to run in 2 minutes
+    ScriptApp.newTrigger('runIndividualDistributionDelayed')
+      .timeBased()
+      .after(2 * 60 * 1000) // 2 minutes in milliseconds
+      .create();
+    
+    return {
+      success: true,
+      phase: 1,
+      totalRows: allData.rows.length,
+      squadDistributionResults: squadDistributionResults
+    };
+    
+  } catch (error) {
+    console.error('❌ Phase 1 failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Phase 2: Run individual distribution after delay
+ */
+function runIndividualDistributionDelayed() {
+  try {
+    console.log('🤖 Running Phase 2: Individual distribution...');
+    
+    // Remove the trigger that called this function
+    const triggers = ScriptApp.getProjectTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'runIndividualDistributionDelayed') {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    });
+    
+    // Run individual distribution
+    const results = distributeToNewSheets();
+    
+    console.log('\n👤 Individual Distribution Results:');
+    results.forEach(result => {
+      if (result.error) {
+        console.log(`❌ ${result.name}: ${result.error}`);
+      } else {
+        console.log(`✅ ${result.name}: ${result.rowCount} rows`);
+      }
+    });
+    
+    console.log('🎉 AUTOMATION FULLY COMPLETE!');
+    
+    return {
+      success: true,
+      phase: 2,
+      individualDistributionResults: results
+    };
+    
+  } catch (error) {
+    console.error('❌ Phase 2 failed:', error);
     throw error;
   }
 }

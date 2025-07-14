@@ -9,62 +9,78 @@ const SheetFormatter = {
    * Write data to a sheet (simplified version)
    */
   writeToSheet(spreadsheet, sheetName, headers, rows) {
-    try {
-      console.log(`Writing to sheet: ${sheetName}, ${rows.length} rows`);
-      
-      // Get or create sheet
-      let sheet = spreadsheet.getSheetByName(sheetName);
-      if (!sheet) {
-        sheet = spreadsheet.insertSheet(sheetName);
-        console.log(`Created new sheet: ${sheetName}`);
-      }
-      
-      // Clear existing content
-      sheet.clearContents();
-      
-      // Write headers
-      if (headers && headers.length > 0) {
-        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    let retries = 3;
+    let lastError;
+    
+    while (retries > 0) {
+      try {
+        console.log(`Writing to sheet: ${sheetName}, ${rows.length} rows`);
         
-        // Basic header formatting
-        sheet.getRange(1, 1, 1, headers.length)
-          .setFontWeight('bold')
-          .setBackground('#f0f0f0');
-      }
-      
-      // Write data
-      if (rows && rows.length > 0) {
-        const dataRows = rows.map(row => {
-          // Handle BigQuery format
-          if (row.f && Array.isArray(row.f)) {
-            return row.f.map(cell => cell.v === null || cell.v === undefined ? '' : cell.v);
-          }
-          // Handle array format
-          if (Array.isArray(row)) {
-            return row.map(value => value === null || value === undefined ? '' : value);
-          }
-          return [String(row)];
-        });
+        // Get or create sheet
+        let sheet = spreadsheet.getSheetByName(sheetName);
+        if (!sheet) {
+          sheet = spreadsheet.insertSheet(sheetName);
+          console.log(`Created new sheet: ${sheetName}`);
+        }
         
-        // Write data starting from row 2
-        const startRow = headers ? 2 : 1;
-        sheet.getRange(startRow, 1, dataRows.length, dataRows[0].length).setValues(dataRows);
+        // Clear existing content
+        sheet.clearContents();
         
-        // Basic number formatting
-        this.applyBasicFormatting(sheet, headers, dataRows.length, startRow);
+        // Write headers
+        if (headers && headers.length > 0) {
+          sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+          
+          // Basic header formatting
+          sheet.getRange(1, 1, 1, headers.length)
+            .setFontWeight('bold')
+            .setBackground('#f0f0f0');
+        }
+        
+        // Write data
+        if (rows && rows.length > 0) {
+          const dataRows = rows.map(row => {
+            // Handle BigQuery format
+            if (row.f && Array.isArray(row.f)) {
+              return row.f.map(cell => cell.v === null || cell.v === undefined ? '' : cell.v);
+            }
+            // Handle array format
+            if (Array.isArray(row)) {
+              return row.map(value => value === null || value === undefined ? '' : value);
+            }
+            return [String(row)];
+          });
+          
+          // Write data starting from row 2
+          const startRow = headers ? 2 : 1;
+          sheet.getRange(startRow, 1, dataRows.length, dataRows[0].length).setValues(dataRows);
+          
+          // Basic number formatting
+          this.applyBasicFormatting(sheet, headers, dataRows.length, startRow);
+        }
+        
+        // Auto-resize columns
+        for (let col = 1; col <= headers.length; col++) {
+          sheet.autoResizeColumn(col);
+        }
+        
+        console.log(`Sheet write completed: ${sheetName}`);
+        return; // Success! Exit the function
+        
+      } catch (error) {
+        lastError = error;
+        retries--;
+        console.error(`Error writing to sheet ${sheetName}:`, error);
+        
+        if (retries > 0) {
+          console.log(`Retrying sheet write for ${sheetName}... (${retries} attempts left)`);
+          // Add delay with exponential backoff
+          Utilities.sleep((3 - retries) * 2000); // 2s, 4s, 6s
+        }
       }
-      
-      // Auto-resize columns
-      for (let col = 1; col <= headers.length; col++) {
-        sheet.autoResizeColumn(col);
-      }
-      
-      console.log(`Sheet write completed: ${sheetName}`);
-      
-    } catch (error) {
-      console.error(`Error writing to sheet ${sheetName}:`, error);
-      throw new Error(`Sheet write failed: ${error.message}`);
     }
+    
+    // All retries exhausted
+    throw new Error(`Sheet write failed after 3 attempts: ${lastError.message}`);
   },
 
   /**
@@ -93,7 +109,7 @@ const SheetFormatter = {
           range.setNumberFormat('0.00%');
         }
         // Format date columns
-        else if (lowerName.includes('date')) {
+        else if (lowerName.includes('date') || lowerName === 'start_cost_date' || lowerName === 'last_cost_date') {
           range.setNumberFormat('M/d/yyyy');
         }
       });

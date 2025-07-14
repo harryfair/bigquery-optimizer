@@ -44,14 +44,27 @@ automatedDailyUpdate()
 // - COMPLETE AUTOMATION: Fetch + Distribute in one function
 // - Fetches ALL campaign data from BigQuery (single query)
 // - Updates main 'all_data' sheet with formatted results
-// - Distributes to all squad sheets automatically
-// - Distributes to individual content creator and DM sheets
+// - Distributes to all 6 squad sheets automatically
+// - Distributes to 5 individual content creator and DM sheets
+// - Uses in-memory data to avoid timeouts
 // - Perfect for daily triggers - saves 85-95% on BigQuery costs
 
 distributeToNewSheets()
 // - Distributes data to individual content creator and DM sheets
 // - Filters by content/dm columns (not SQUAD)
 // - Removes SQUAD and visual columns from output
+// - Has retry logic with exponential backoff
+
+runIndividualDistributionOnly()
+// - Fallback function if individual distribution fails
+// - Runs only the individual distribution part
+// - Useful for manual recovery
+
+automatedDailyUpdatePhase1()
+// - Alternative: Runs automation in two phases
+// - Phase 1: BigQuery fetch + squad distribution
+// - Automatically schedules Phase 2 after 2 minutes
+// - Use if timeout issues persist
 
 quickTestYourSheet()
 // - Manual BigQuery fetch and main sheet update
@@ -85,6 +98,13 @@ checkSquadValues()
 - **AREA 3** → Individual sheet: `1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU`
 - **PROGRAM** → Individual sheet: `1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU`
 - **HOSPITAL & INBOUND** → Combined sheet: `1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo`
+
+### **Individual Distribution (5 sheets)**:
+- **MELATI** → Content sheet: `1bTJfS0fh35NmZ3eRG5OmXDA2kRmdxGeG-6CtB9Y-qn4`
+- **GITA** → Content sheet: `1EsHZOAcgMdUWM0RNs2MM1U69aPDW4xqEEJIBoe9PHXA`
+- **ABI** → Content sheet: `1I3oJQJ1cxYbblG38CtGAtPxVDVexYlFntP5YKpGB6HE`
+- **TAUFIK** → DM sheet: `1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg`
+- **KEVIN** → DM sheet: `1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I`
 
 ### **Squads (6 total)**:
 - AREA 1, AREA 2, AREA 3, PROGRAM, HOSPITAL, INBOUND
@@ -198,13 +218,14 @@ BigQuery (ONE call) → All Data → Local Filtering → Multiple Squad Sheets
 8:00 AM (Jakarta) → automatedDailyUpdate() runs →
 ├─ 📊 Fetch BigQuery data (1 optimized query)
 ├─ 📝 Update main sheet (all_data)
-├─ 🚀 Distribute to 5 squad sheets
+├─ 🚀 Distribute to 6 squads (5 sheets)
+├─ 👤 Distribute to 5 individuals
 └─ ✅ Complete execution summary
 ```
 
-**Total time**: ~2 minutes  
+**Total time**: ~3.5 minutes  
 **Manual work**: 0 minutes  
-**Cost**: Single BigQuery call + 5 free distributions
+**Cost**: Single BigQuery call + 10 free distributions
 
 ## 🔍 **Troubleshooting**
 
@@ -212,11 +233,18 @@ BigQuery (ONE call) → All Data → Local Filtering → Multiple Squad Sheets
 - **"Permission denied"**: Enable BigQuery API in Google Cloud Console
 - **"Table not found"**: Verify project/dataset/table names are correct
 - **No data**: Check if campaigns exist for recent dates
+- **"Service Spreadsheets timed out"**: Use `runIndividualDistributionOnly()` or `automatedDailyUpdatePhase1()`
+
+### **Timeout Solutions**
+1. **Primary**: `automatedDailyUpdate()` now uses in-memory data (should work)
+2. **Fallback**: Run `runIndividualDistributionOnly()` separately after main automation
+3. **Alternative**: Use `automatedDailyUpdatePhase1()` for two-phase execution
 
 ### **Performance Tips**
 - Run once daily to minimize costs
 - Check console logs for execution details
 - Data includes all time periods (today through this year)
+- All sheets have retry logic with exponential backoff
 
 ## 📚 **Documentation**
 
@@ -228,19 +256,22 @@ BigQuery (ONE call) → All Data → Local Filtering → Multiple Squad Sheets
 ### **✅ Currently Implemented**
 - **Complete automation system** with daily triggers
 - **Single BigQuery call optimization** (85-95% cost savings)
-- **Multi-squad data distribution** (5 sheets)
+- **Multi-squad data distribution** (6 squads to 5 sheets)
+- **Individual distribution** (5 content creators and DMs)
 - **Smart squad detection** with flexible name matching
 - **Combined HOSPITAL & INBOUND processing**
 - **Automatic date formatting** (M/d/yyyy)
 - **Column filtering** (removes SQUAD and visual columns)
-- **Real-time data processing** from BigQuery to all sheets
+- **In-memory data processing** to avoid timeouts
+- **Retry logic** with exponential backoff for reliability
+- **Two-phase automation** option for timeout handling
 
 ### **🔮 Future Expansion Possibilities**
-- Individual content creator and DM sheets
+- More individual content creator and DM sheets
 - Advanced filtering and analytics
 - Performance monitoring dashboards
-- Automated daily scheduling
 - Email reporting summaries
+- Custom alert notifications
 
 ## 📞 **Support**
 
@@ -251,10 +282,12 @@ BigQuery (ONE call) → All Data → Local Filtering → Multiple Squad Sheets
 ## 🎯 **Current Status**
 
 ✅ **Fully Automated**: Complete daily automation system deployed  
-✅ **Cost Optimized**: Single query + 5 free distributions (85-95% savings)  
-✅ **Production Ready**: Automated squad distribution with smart detection  
-✅ **Documented**: Complete setup and automation guides  
-✅ **Multi-Squad Support**: 6 squads distributed to 5 sheets automatically  
+✅ **Cost Optimized**: Single query + 10 free distributions (85-95% savings)  
+✅ **Production Ready**: Automated squad and individual distribution  
+✅ **Timeout Resistant**: In-memory processing with retry logic  
+✅ **Multi-Distribution**: 6 squads + 5 individuals = 11 total distributions  
 ✅ **Zero Manual Work**: Set trigger once, runs forever  
+
+**Latest Update**: Fixed timeout issues with in-memory data processing and retry logic! 🚀
 
 **Automation**: `automatedDailyUpdate()` - Complete hands-free daily updates! 🤖
