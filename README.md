@@ -45,6 +45,7 @@ automatedDailyUpdate()
 // - Fetches ALL campaign data from BigQuery (single query)
 // - Updates main 'all_data' sheet with formatted results
 // - Distributes to all squad sheets automatically
+// - Distributes to individual content creator and DM sheets
 // - Perfect for daily triggers - saves 85-95% on BigQuery costs
 
 distributeToNewSheets()

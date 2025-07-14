@@ -78,10 +78,11 @@ distributeToAllSquads()
 1. Connects to your Google Sheet (ID: 10HpNIKXR3OPX-WErO_max3YqKnNPnZmehahTZXPlIpQ)
 2. Executes single optimized BigQuery query
 3. Creates/updates 'all_data' sheet with all campaign data
-4. **Automatically distributes to all 5 squad sheets**
-5. **Smart squad detection** - finds actual squad names in data
-6. Provides complete execution summary with timing
-7. **Perfect for daily triggers** - complete hands-free operation
+4. **Automatically distributes to all squad sheets**
+5. **Automatically distributes to individual sheets (MELATI, GITA, ABI, TAUFIK, KEVIN)**
+6. **Smart detection** - finds actual squad names and individuals in data
+7. Provides complete execution summary with timing for both distributions
+8. **Perfect for daily triggers** - complete hands-free operation
 
 #### **`quickTestYourSheet()` - MANUAL FUNCTION**
 **What it does**:

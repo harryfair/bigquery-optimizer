@@ -182,16 +182,92 @@ function automatedDailyUpdate() {
       return [String(row)];
     });
     
-    const distributionResults = distributeToAllSquadsFromData({headers: allData.headers, rows: formattedRows});
+    const squadDistributionResults = distributeToAllSquadsFromData({headers: allData.headers, rows: formattedRows});
     
-    // Step 4: Summary
+    // Step 4: Distribute to individual sheets
+    console.log('👤 Step 4: Distributing to individual sheets...');
+    let individualResults = [];
+    try {
+      // Get data from the all_data sheet we just created
+      const sheet = ss.getSheetByName('all_data');
+      const sheetData = sheet.getDataRange().getValues();
+      const sheetHeaders = sheetData[0];
+      const sheetRows = sheetData.slice(1);
+      
+      // Find column indices
+      const contentIndex = sheetHeaders.indexOf('content');
+      const dmIndex = sheetHeaders.indexOf('dm');
+      const visualIndex = sheetHeaders.indexOf('visual');
+      const squadIndex = sheetHeaders.indexOf('SQUAD');
+      
+      if (contentIndex !== -1 && dmIndex !== -1) {
+        // Define individuals and their columns
+        const individuals = {
+          'MELATI': { column: 'content', sheetId: '1bTJfS0fh35NmZ3eRG5OmXDA2kRmdxGeG-6CtB9Y-qn4' },
+          'GITA': { column: 'content', sheetId: '1EsHZOAcgMdUWM0RNs2MM1U69aPDW4xqEEJIBoe9PHXA' },
+          'ABI': { column: 'content', sheetId: '1I3oJQJ1cxYbblG38CtGAtPxVDVexYlFntP5YKpGB6HE' },
+          'TAUFIK': { column: 'dm', sheetId: '1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg' },
+          'KEVIN': { column: 'dm', sheetId: '1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I' }
+        };
+        
+        for (const [name, config] of Object.entries(individuals)) {
+          try {
+            // Filter rows based on content or dm column
+            const columnIndex = config.column === 'content' ? contentIndex : dmIndex;
+            const filteredRows = sheetRows.filter(row => {
+              const value = row[columnIndex];
+              return value && value.toString().toUpperCase() === name;
+            });
+            
+            if (filteredRows.length === 0) {
+              console.log(`⚠️ ${name}: No data found in ${config.column} column`);
+              individualResults.push({name, rowCount: 0, column: config.column});
+              continue;
+            }
+            
+            // Remove SQUAD and visual columns from headers and rows
+            const filteredHeaders = sheetHeaders.filter((header, index) => 
+              index !== visualIndex && index !== squadIndex
+            );
+            const finalRows = filteredRows.map(row => 
+              row.filter((cell, index) => index !== visualIndex && index !== squadIndex)
+            );
+            
+            // Write to individual sheet
+            const targetSheet = SpreadsheetApp.openById(config.sheetId);
+            SheetFormatter.writeToSheet(targetSheet, 'campaign', filteredHeaders, finalRows);
+            
+            individualResults.push({
+              name: name,
+              rowCount: finalRows.length,
+              column: config.column,
+              sheetName: targetSheet.getName()
+            });
+            
+            console.log(`✅ ${name}: ${finalRows.length} rows distributed from ${config.column} column`);
+            
+          } catch (error) {
+            console.error(`❌ ${name}: ${error.message}`);
+            individualResults.push({name, error: error.message});
+          }
+        }
+      } else {
+        console.error('⚠️ Skipping individual distribution - required columns not found');
+      }
+    } catch (error) {
+      console.error('❌ Individual distribution failed:', error);
+    }
+    
+    // Step 5: Summary
     const endTime = new Date();
     const duration = Math.round((endTime - startTime) / 1000);
     
     console.log('🎉 AUTOMATION COMPLETE!');
     console.log(`⏱️ Total time: ${duration} seconds`);
     console.log(`📊 Main sheet: ${allData.rows.length} rows`);
-    distributionResults.forEach(result => {
+    
+    console.log('\n📋 Squad Distribution Results:');
+    squadDistributionResults.forEach(result => {
       if (result.error) {
         console.log(`❌ ${result.squadName}: ${result.error}`);
       } else {
@@ -199,11 +275,21 @@ function automatedDailyUpdate() {
       }
     });
     
+    console.log('\n👤 Individual Distribution Results:');
+    individualResults.forEach(result => {
+      if (result.error) {
+        console.log(`❌ ${result.name}: ${result.error}`);
+      } else {
+        console.log(`✅ ${result.name}: ${result.rowCount} rows`);
+      }
+    });
+    
     return {
       success: true,
       totalRows: allData.rows.length,
       duration: duration,
-      distributionResults: distributionResults
+      squadDistributionResults: squadDistributionResults,
+      individualDistributionResults: individualResults
     };
     
   } catch (error) {
