@@ -26,7 +26,28 @@ const SQUAD_SHEETS = {
   'HOSPITAL': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
   'Hospital': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
   'INBOUND': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
-  'Inbound': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo'
+  'Inbound': '1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo',
+  
+  // New distribution sheets
+  'MELATI': '1bTJfS0fh35NmZ3eRG5OmXDA2kRmdxGeG-6CtB9Y-qn4',
+  'Melati': '1bTJfS0fh35NmZ3eRG5OmXDA2kRmdxGeG-6CtB9Y-qn4',
+  'melati': '1bTJfS0fh35NmZ3eRG5OmXDA2kRmdxGeG-6CtB9Y-qn4',
+  
+  'GITA': '1EsHZOAcgMdUWM0RNs2MM1U69aPDW4xqEEJIBoe9PHXA',
+  'Gita': '1EsHZOAcgMdUWM0RNs2MM1U69aPDW4xqEEJIBoe9PHXA',
+  'gita': '1EsHZOAcgMdUWM0RNs2MM1U69aPDW4xqEEJIBoe9PHXA',
+  
+  'ABI': '1I3oJQJ1cxYbblG38CtGAtPxVDVexYlFntP5YKpGB6HE',
+  'Abi': '1I3oJQJ1cxYbblG38CtGAtPxVDVexYlFntP5YKpGB6HE',
+  'abi': '1I3oJQJ1cxYbblG38CtGAtPxVDVexYlFntP5YKpGB6HE',
+  
+  'TAUFIK': '1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg',
+  'Taufik': '1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg',
+  'taufik': '1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg',
+  
+  'KEVIN': '1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I',
+  'Kevin': '1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I',
+  'kevin': '1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I'
 };
 
 /**
@@ -37,16 +58,92 @@ function getYourSpreadsheet() {
 }
 
 /**
- * Test connection to your sheet
+ * Manual distribution to new individual sheets
  */
-function testYourSheetConnection() {
+function distributeToNewSheets() {
   try {
+    console.log('📊 Starting distribution to new individual sheets...');
+    
+    // Get data from all_data sheet
     const ss = getYourSpreadsheet();
-    console.log('✅ Successfully connected to your sheet:', ss.getName());
-    return true;
+    const sheet = ss.getSheetByName('all_data');
+    if (!sheet) {
+      throw new Error('all_data sheet not found. Run quickTestYourSheet() first.');
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    // Find column indices
+    const contentIndex = headers.indexOf('content');
+    const dmIndex = headers.indexOf('dm');
+    const visualIndex = headers.indexOf('visual');
+    const squadIndex = headers.indexOf('SQUAD');
+    
+    if (contentIndex === -1 || dmIndex === -1) {
+      throw new Error('Required columns (content, dm) not found in data');
+    }
+    
+    // Define individuals and their columns
+    const individuals = {
+      'MELATI': { column: 'content', sheetId: '1bTJfS0fh35NmZ3eRG5OmXDA2kRmdxGeG-6CtB9Y-qn4' },
+      'GITA': { column: 'content', sheetId: '1EsHZOAcgMdUWM0RNs2MM1U69aPDW4xqEEJIBoe9PHXA' },
+      'ABI': { column: 'content', sheetId: '1I3oJQJ1cxYbblG38CtGAtPxVDVexYlFntP5YKpGB6HE' },
+      'TAUFIK': { column: 'dm', sheetId: '1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg' },
+      'KEVIN': { column: 'dm', sheetId: '1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I' }
+    };
+    
+    const results = [];
+    
+    for (const [name, config] of Object.entries(individuals)) {
+      try {
+        // Filter rows based on content or dm column
+        const columnIndex = config.column === 'content' ? contentIndex : dmIndex;
+        const filteredRows = rows.filter(row => {
+          const value = row[columnIndex];
+          return value && value.toString().toUpperCase() === name;
+        });
+        
+        if (filteredRows.length === 0) {
+          console.log(`⚠️ ${name}: No data found in ${config.column} column`);
+          results.push({name, rowCount: 0, column: config.column});
+          continue;
+        }
+        
+        // Remove SQUAD and visual columns from headers and rows
+        const filteredHeaders = headers.filter((header, index) => 
+          index !== visualIndex && index !== squadIndex
+        );
+        const finalRows = filteredRows.map(row => 
+          row.filter((cell, index) => index !== visualIndex && index !== squadIndex)
+        );
+        
+        // Write to individual sheet
+        const targetSheet = SpreadsheetApp.openById(config.sheetId);
+        SheetFormatter.writeToSheet(targetSheet, 'campaign', filteredHeaders, finalRows);
+        
+        results.push({
+          name: name,
+          rowCount: finalRows.length,
+          column: config.column,
+          sheetName: targetSheet.getName()
+        });
+        
+        console.log(`✅ ${name}: ${finalRows.length} rows distributed from ${config.column} column`);
+        
+      } catch (error) {
+        console.error(`❌ ${name}: ${error.message}`);
+        results.push({name, error: error.message});
+      }
+    }
+    
+    console.log('🎉 Distribution to new sheets complete!');
+    return results;
+    
   } catch (error) {
-    console.error('❌ Failed to connect to your sheet:', error);
-    return false;
+    console.error('❌ Distribution failed:', error);
+    throw error;
   }
 }
 
@@ -61,10 +158,6 @@ function automatedDailyUpdate() {
     
     // Step 1: Fetch all data from BigQuery
     console.log('📊 Step 1: Fetching data from BigQuery...');
-    if (!testYourSheetConnection()) {
-      throw new Error('Cannot connect to your sheet');
-    }
-    
     const ss = getYourSpreadsheet();
     const allData = BigQueryFetcher.fetchAllData();
     console.log(`✅ Fetched ${allData.rows.length} rows from BigQuery`);
@@ -119,7 +212,6 @@ function automatedDailyUpdate() {
   }
 }
 
-
 /**
  * Distribute data to ALL squad sheets from provided data (used by automation)
  */
@@ -161,7 +253,6 @@ function distributeToAllSquadsFromData(allData) {
   return results;
 }
 
-
 /**
  * Distribute data to a specific squad sheet
  */
@@ -199,3 +290,94 @@ function distributeToSquad(allData, squadName, sheetId) {
   };
 }
 
+/**
+ * Quick test - fetch from BigQuery and write to your sheet
+ */
+function quickTestYourSheet() {
+  try {
+    // 1. Fetch data from BigQuery
+    console.log('📊 Fetching data from BigQuery...');
+    const allData = BigQueryFetcher.fetchAllData();
+    console.log(`✅ Got ${allData.rows.length} rows`);
+    
+    // 2. Write to sheet
+    console.log('📝 Writing to sheet...');
+    const ss = getYourSpreadsheet();
+    SheetFormatter.writeToSheet(ss, 'all_data', allData.headers, allData.rows);
+    
+    console.log('✅ Success! Check your sheet.');
+  } catch (error) {
+    console.error('❌ Error:', error);
+  }
+}
+
+/**
+ * Distribute to ALL squad sheets (reads from all_data sheet)
+ */
+function distributeToAllSquads() {
+  try {
+    console.log('📊 Starting distribution to all squad sheets...');
+    
+    // Get data from all_data sheet
+    const ss = getYourSpreadsheet();
+    const sheet = ss.getSheetByName('all_data');
+    if (!sheet) {
+      throw new Error('all_data sheet not found. Run quickTestYourSheet() first.');
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    // Distribute to all squads
+    const results = distributeToAllSquadsFromData({headers, rows});
+    
+    console.log('🎉 Distribution complete!');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Distribution failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check actual squad values in your data
+ */
+function checkSquadValues() {
+  try {
+    const ss = getYourSpreadsheet();
+    const sheet = ss.getSheetByName('all_data');
+    if (!sheet) {
+      console.error('❌ all_data sheet not found. Run quickTestYourSheet() first.');
+      return;
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const squadIndex = headers.indexOf('SQUAD');
+    
+    if (squadIndex === -1) {
+      console.error('❌ SQUAD column not found');
+      return;
+    }
+    
+    // Get unique squad values
+    const squads = new Set();
+    for (let i = 1; i < data.length; i++) {
+      const squadValue = data[i][squadIndex];
+      if (squadValue) {
+        squads.add(squadValue);
+      }
+    }
+    
+    console.log('📊 Found SQUAD values in data:');
+    Array.from(squads).sort().forEach(squad => {
+      const mapped = SQUAD_SHEETS[squad] ? '✅ Mapped' : '❌ Not mapped';
+      console.log(`  - "${squad}" ${mapped}`);
+    });
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+  }
+}

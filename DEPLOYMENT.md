@@ -101,7 +101,14 @@ distributeToAllSquads()
 - **AREA 2** → `1sU117oq1vwvTQR7WY_qgulAVQkF_2PhC0_wEaD9liNs`
 - **AREA 3** → `1XOlGgtIRVYEg2Z_9V3T_Loq-HoTj42EMVEsfsGXLTAU`
 - **PROGRAM** → `1FZJPHX13UgU58vajXnwHLfh3_SL-Ry7AwGLuNNxfZUU`
-- **HOSPITAL & INBOUND** → `1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo` (combined)
+- **HOSPITAL/INBOUND** → `1aSyTNwUqfYk11yhkcVuND4SjkPOcz8zb_pHWun1Revo`
+
+### **New Distribution Sheets Added**
+- **MELATI** → `16Nm6kkooszlTLnbR7TR17Lq44uQKCwliRQV8XaDCU30`
+- **GITA** → `12lyRgqKWkSO2KAB5YijhKikmQyaqITVal80-Enhuu5U`
+- **ABI** → `1o1BhCb1r0JIOiNun26mpqm8osClW86xHNu8YWcPI1xc`
+- **TAUFIK** → `1AM4Hv1A3KcnrACtDlTTPRVPhnam8ueXbRUKPUqfAMfg`
+- **KEVIN** → `1eajXhjCIc0yLROM62SM0G10nDbEMBbyIEissdCNY40I`
 
 ### **🤖 Automation Setup**
 1. **Open Apps Script**: https://script.google.com/d/1pJzhrhoDh5YHViWD3mrz0XFSRzH0MdN9bQG4NbDmigr1bp2gTmXjN1mP/edit
