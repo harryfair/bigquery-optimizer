@@ -169,8 +169,16 @@ const BigQueryFetcher = {
         location: this.config.location 
       });
       
-      // Wait for completion
+      // Wait for completion with timeout
+      const maxWaitTime = 300000; // 5 minutes
+      const startTime = new Date().getTime();
+      
       while (!results.jobComplete) {
+        // Check timeout
+        if (new Date().getTime() - startTime > maxWaitTime) {
+          throw new Error('BigQuery query timeout after 5 minutes');
+        }
+        
         Utilities.sleep(1000);
         results = BigQuery.Jobs.getQueryResults(this.config.projectId, jobId, { 
           location: this.config.location 
