@@ -54,7 +54,26 @@ const SQUAD_SHEETS = {
  * Get your specific spreadsheet
  */
 function getYourSpreadsheet() {
-  return SpreadsheetApp.openById(YOUR_SHEET_ID);
+  let retries = 3;
+  let lastError;
+  
+  while (retries > 0) {
+    try {
+      return SpreadsheetApp.openById(YOUR_SHEET_ID);
+    } catch (error) {
+      lastError = error;
+      retries--;
+      
+      if (retries > 0) {
+        console.log(`⚠️ Failed to open main spreadsheet, retrying... (${retries} attempts left)`);
+        // Exponential backoff: 2s, 4s, 6s
+        Utilities.sleep((3 - retries) * 2000);
+      }
+    }
+  }
+  
+  console.error('Failed to open spreadsheet after 3 attempts:', lastError);
+  throw new Error(`Cannot access spreadsheet with ID: ${YOUR_SHEET_ID}. Error: ${lastError.message}`);
 }
 
 /**
@@ -175,17 +194,40 @@ function distributeToNewSheets() {
 }
 
 /**
+ * Safe wrapper for automated execution that prevents post-completion timeouts
+ */
+function safeAutomatedDailyUpdate() {
+  try {
+    // Run the main automation
+    const result = automatedDailyUpdate();
+    
+    // Ensure clean exit without any additional spreadsheet access
+    console.log('\n✨ Automation wrapper completed. Exiting cleanly.');
+    
+    // Force garbage collection hint
+    SpreadsheetApp.flush();
+    
+    return result;
+  } catch (error) {
+    console.error('❌ Safe automation wrapper error:', error);
+    // Don't re-throw to prevent additional error handling that might access sheets
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * AUTOMATED COMPLETE WORKFLOW - Fetch data and distribute to all squads
  * THIS IS THE MAIN AUTOMATION FUNCTION
  */
 function automatedDailyUpdate() {
+  let ss = null;
   try {
     console.log('🤖 Starting automated daily update...');
     const startTime = new Date();
     
     // Step 1: Fetch all data from BigQuery
     console.log('📊 Step 1: Fetching data from BigQuery...');
-    const ss = getYourSpreadsheet();
+    ss = getYourSpreadsheet();
     const allData = BigQueryFetcher.fetchAllData();
     console.log(`✅ Fetched ${allData.rows.length} rows from BigQuery`);
     
@@ -335,6 +377,22 @@ function automatedDailyUpdate() {
         console.log(`✅ ${result.name}: ${result.rowCount} rows`);
       }
     });
+    
+    // Add integrated workflow summary
+    const totalSquadRows = squadDistributionResults.reduce((sum, r) => sum + (r.rowCount || 0), 0);
+    const totalIndividualRows = individualResults.reduce((sum, r) => sum + (r.rowCount || 0), 0);
+    const successfulSquads = squadDistributionResults.filter(r => !r.error).length;
+    const successfulIndividuals = individualResults.filter(r => !r.error).length;
+    
+    console.log('\n✅ BigQuery Optimizer completed successfully!');
+    console.log(`   - Total rows distributed: ${totalSquadRows}`);
+    console.log(`   - Squad sheets updated: ${successfulSquads}`);
+    console.log(`   - Individual sheets updated: ${successfulIndividuals}`);
+    
+    console.log('\n🎉 INTEGRATED WORKFLOW COMPLETE!');
+    console.log('=================================');
+    console.log(`⏱️  Total execution time: ${duration} seconds`);
+    console.log(`📅 Timestamp: ${Utilities.formatDate(endTime, 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss')} WIB`);
     
     return {
       success: true,
@@ -527,19 +585,20 @@ function setupAutomationTriggers() {
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => {
     if (trigger.getHandlerFunction() === 'automatedDailyUpdate' || 
+        trigger.getHandlerFunction() === 'safeAutomatedDailyUpdate' ||
         trigger.getHandlerFunction() === 'runIndividualDistributionDelayed') {
       ScriptApp.deleteTrigger(trigger);
     }
   });
   
-  // Set up daily trigger at 6 AM
-  ScriptApp.newTrigger('automatedDailyUpdate')
+  // Set up daily trigger at 6 AM using the safe wrapper
+  ScriptApp.newTrigger('safeAutomatedDailyUpdate')
     .timeBased()
     .atHour(6)
     .everyDays(1)
     .create();
     
-  console.log('✅ Daily automation trigger set for 6 AM');
+  console.log('✅ Daily automation trigger set for 6 AM (using safe wrapper)');
 }
 
 /**
